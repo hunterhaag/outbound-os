@@ -30,7 +30,7 @@ export default function Sidebar() {
         </Link>
 
         <Link
-          href="#"
+          href="/tasks"
           className="block text-gray-300 hover:text-white"
         >
           📅 Tasks
