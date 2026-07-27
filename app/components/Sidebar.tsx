@@ -23,7 +23,7 @@ export default function Sidebar() {
         </Link>
 
         <Link
-          href="#"
+          href="/companies"
           className="block text-gray-300 hover:text-white"
         >
           🏢 Companies
