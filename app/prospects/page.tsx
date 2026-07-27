@@ -2,14 +2,24 @@
 
 import { useState } from "react";
 
+type Prospect = {
+  name: string;
+  company: string;
+  title: string;
+  email: string;
+  status: string;
+  action: string;
+};
+
 export default function ProspectsPage() {
   const [showForm, setShowForm] = useState(false);
 
-  const prospects = [
+  const [prospects, setProspects] = useState<Prospect[]>([
     {
       name: "John Smith",
       company: "Acme Corporation",
       title: "VP of Sales",
+      email: "john@acme.com",
       status: "Contacted",
       action: "Send follow-up email",
     },
@@ -17,17 +27,39 @@ export default function ProspectsPage() {
       name: "Sarah Johnson",
       company: "Oracle",
       title: "Director of Operations",
+      email: "sarah@oracle.com",
       status: "Meeting Set",
       action: "Prepare discovery call",
     },
-    {
-      name: "Mike Williams",
-      company: "Blue Yonder",
-      title: "Enterprise Manager",
+  ]);
+
+  const [form, setForm] = useState({
+    name: "",
+    company: "",
+    title: "",
+    email: "",
+  });
+
+  function saveProspect() {
+    if (!form.name || !form.company) return;
+
+    const newProspect: Prospect = {
+      ...form,
       status: "New",
       action: "Research company",
-    },
-  ];
+    };
+
+    setProspects([...prospects, newProspect]);
+
+    setForm({
+      name: "",
+      company: "",
+      title: "",
+      email: "",
+    });
+
+    setShowForm(false);
+  }
 
   return (
     <div className="p-8">
@@ -56,34 +88,40 @@ export default function ProspectsPage() {
             New Prospect
           </h2>
 
-          <input
-            className="border p-3 rounded w-full mb-3"
-            placeholder="Name"
-          />
+          {[
+            "name",
+            "company",
+            "title",
+            "email",
+          ].map((field) => (
+            <input
+              key={field}
+              className="border p-3 rounded w-full mb-3"
+              placeholder={
+                field.charAt(0).toUpperCase() +
+                field.slice(1)
+              }
+              value={form[field as keyof typeof form]}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  [field]: e.target.value,
+                })
+              }
+            />
+          ))}
 
-          <input
-            className="border p-3 rounded w-full mb-3"
-            placeholder="Company"
-          />
-
-          <input
-            className="border p-3 rounded w-full mb-3"
-            placeholder="Title"
-          />
-
-          <input
-            className="border p-3 rounded w-full mb-3"
-            placeholder="Email"
-          />
-
-          <button className="bg-blue-600 text-white px-5 py-3 rounded-lg">
+          <button
+            onClick={saveProspect}
+            className="bg-blue-600 text-white px-5 py-3 rounded-lg"
+          >
             Save Prospect
           </button>
         </div>
       )}
 
       <div className="grid grid-cols-3 gap-6 mt-8">
-        <StatCard title="Total Prospects" value="42" />
+        <StatCard title="Total Prospects" value={String(prospects.length)} />
         <StatCard title="Meetings Booked" value="8" />
         <StatCard title="Follow-ups Due" value="12" />
       </div>
@@ -91,7 +129,7 @@ export default function ProspectsPage() {
       <div className="mt-8 space-y-4">
         {prospects.map((prospect) => (
           <div
-            key={prospect.name}
+            key={prospect.email}
             className="bg-white rounded-xl shadow p-6"
           >
             <h2 className="text-xl font-bold">
@@ -100,6 +138,10 @@ export default function ProspectsPage() {
 
             <p className="text-gray-600">
               {prospect.title} at {prospect.company}
+            </p>
+
+            <p className="mt-2 text-gray-500">
+              {prospect.email}
             </p>
 
             <div className="mt-4">
