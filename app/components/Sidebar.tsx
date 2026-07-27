@@ -37,7 +37,7 @@ export default function Sidebar() {
         </Link>
 
         <Link
-          href="#"
+          href="/ai-assistant"
           className="block text-gray-300 hover:text-white"
         >
           🤖 AI Assistant
