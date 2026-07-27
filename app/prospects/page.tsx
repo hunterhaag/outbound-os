@@ -1,37 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
 
 type Prospect = {
+  id?: string;
   name: string;
   company: string;
   title: string;
   email: string;
   status: string;
   action: string;
+  created_at?: string;
 };
 
 export default function ProspectsPage() {
   const [showForm, setShowForm] = useState(false);
 
-  const [prospects, setProspects] = useState<Prospect[]>([
-    {
-      name: "John Smith",
-      company: "Acme Corporation",
-      title: "VP of Sales",
-      email: "john@acme.com",
-      status: "Contacted",
-      action: "Send follow-up email",
-    },
-    {
-      name: "Sarah Johnson",
-      company: "Oracle",
-      title: "Director of Operations",
-      email: "sarah@oracle.com",
-      status: "Meeting Set",
-      action: "Prepare discovery call",
-    },
-  ]);
+  const [prospects, setProspects] = useState<Prospect[]>([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -40,16 +26,51 @@ export default function ProspectsPage() {
     email: "",
   });
 
-  function saveProspect() {
+  useEffect(() => {
+    loadProspects();
+  }, []);
+
+  async function loadProspects() {
+    const { data, error } = await supabase
+      .from("prospects")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("LOAD ERROR:", error.message);
+      return;
+    }
+
+    setProspects(data || []);
+  }
+
+  async function saveProspect() {
     if (!form.name || !form.company) return;
 
-    const newProspect: Prospect = {
-      ...form,
+    const newProspect = {
+      name: form.name,
+      company: form.company,
+      title: form.title,
+      email: form.email,
       status: "New",
       action: "Research company",
     };
 
-    setProspects([...prospects, newProspect]);
+    const { data, error } = await supabase
+      .from("prospects")
+      .insert([newProspect])
+      .select();
+
+    if (error) {
+      console.error("SAVE ERROR:", error.message);
+      alert(error.message);
+      return;
+    }
+
+    setProspects([
+      ...prospects,
+      ...(data || []),
+    ]);
 
     setForm({
       name: "",
@@ -88,12 +109,7 @@ export default function ProspectsPage() {
             New Prospect
           </h2>
 
-          {[
-            "name",
-            "company",
-            "title",
-            "email",
-          ].map((field) => (
+          {["name", "company", "title", "email"].map((field) => (
             <input
               key={field}
               className="border p-3 rounded w-full mb-3"
@@ -121,15 +137,26 @@ export default function ProspectsPage() {
       )}
 
       <div className="grid grid-cols-3 gap-6 mt-8">
-        <StatCard title="Total Prospects" value={String(prospects.length)} />
-        <StatCard title="Meetings Booked" value="8" />
-        <StatCard title="Follow-ups Due" value="12" />
+        <StatCard
+          title="Total Prospects"
+          value={String(prospects.length)}
+        />
+
+        <StatCard
+          title="Meetings Booked"
+          value="8"
+        />
+
+        <StatCard
+          title="Follow-ups Due"
+          value="12"
+        />
       </div>
 
       <div className="mt-8 space-y-4">
         {prospects.map((prospect) => (
           <div
-            key={prospect.email}
+            key={prospect.id}
             className="bg-white rounded-xl shadow p-6"
           >
             <h2 className="text-xl font-bold">
