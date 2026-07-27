@@ -1,28 +1,34 @@
-const prospects = [
-  {
-    name: "John Smith",
-    company: "Acme Corporation",
-    title: "VP of Sales",
-    status: "Contacted",
-    action: "Send follow-up email",
-  },
-  {
-    name: "Sarah Johnson",
-    company: "Oracle",
-    title: "Director of Operations",
-    status: "Meeting Set",
-    action: "Prepare discovery call",
-  },
-  {
-    name: "Mike Williams",
-    company: "Blue Yonder",
-    title: "Enterprise Manager",
-    status: "New",
-    action: "Research company",
-  },
-];
+"use client";
+
+import { useState } from "react";
 
 export default function ProspectsPage() {
+  const [showForm, setShowForm] = useState(false);
+
+  const prospects = [
+    {
+      name: "John Smith",
+      company: "Acme Corporation",
+      title: "VP of Sales",
+      status: "Contacted",
+      action: "Send follow-up email",
+    },
+    {
+      name: "Sarah Johnson",
+      company: "Oracle",
+      title: "Director of Operations",
+      status: "Meeting Set",
+      action: "Prepare discovery call",
+    },
+    {
+      name: "Mike Williams",
+      company: "Blue Yonder",
+      title: "Enterprise Manager",
+      status: "New",
+      action: "Research company",
+    },
+  ];
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center">
@@ -36,10 +42,45 @@ export default function ProspectsPage() {
           </p>
         </div>
 
-        <button className="bg-gray-900 text-white px-5 py-3 rounded-lg">
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-gray-900 text-white px-5 py-3 rounded-lg"
+        >
           + Add Prospect
         </button>
       </div>
+
+      {showForm && (
+        <div className="mt-6 bg-white rounded-xl shadow p-6">
+          <h2 className="text-xl font-bold mb-4">
+            New Prospect
+          </h2>
+
+          <input
+            className="border p-3 rounded w-full mb-3"
+            placeholder="Name"
+          />
+
+          <input
+            className="border p-3 rounded w-full mb-3"
+            placeholder="Company"
+          />
+
+          <input
+            className="border p-3 rounded w-full mb-3"
+            placeholder="Title"
+          />
+
+          <input
+            className="border p-3 rounded w-full mb-3"
+            placeholder="Email"
+          />
+
+          <button className="bg-blue-600 text-white px-5 py-3 rounded-lg">
+            Save Prospect
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-6 mt-8">
         <StatCard title="Total Prospects" value="42" />
