@@ -4,20 +4,30 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 type Prospect = {
-  id?: string;
+  id: string;
   name: string;
   company: string;
   title: string;
   email: string;
   status: string;
   action: string;
-  created_at?: string;
+  stage: string;
 };
 
-export default function ProspectsPage() {
-  const [showForm, setShowForm] = useState(false);
+const stages = [
+  "New",
+  "Researching",
+  "Contacted",
+  "Replied",
+  "Meeting Booked",
+  "Proposal",
+  "Won",
+  "Lost",
+];
 
+export default function ProspectsPage() {
   const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -37,7 +47,7 @@ export default function ProspectsPage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("LOAD ERROR:", error.message);
+      console.error(error.message);
       return;
     }
 
@@ -45,8 +55,6 @@ export default function ProspectsPage() {
   }
 
   async function saveProspect() {
-    if (!form.name || !form.company) return;
-
     const newProspect = {
       name: form.name,
       company: form.company,
@@ -54,6 +62,7 @@ export default function ProspectsPage() {
       email: form.email,
       status: "New",
       action: "Research company",
+      stage: "New",
     };
 
     const { data, error } = await supabase
@@ -62,14 +71,13 @@ export default function ProspectsPage() {
       .select();
 
     if (error) {
-      console.error("SAVE ERROR:", error.message);
       alert(error.message);
       return;
     }
 
     setProspects([
-      ...prospects,
       ...(data || []),
+      ...prospects,
     ]);
 
     setForm({
@@ -82,16 +90,40 @@ export default function ProspectsPage() {
     setShowForm(false);
   }
 
+  async function updateStage(
+    id: string,
+    stage: string
+  ) {
+    const { error } = await supabase
+      .from("prospects")
+      .update({ stage })
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setProspects(
+      prospects.map((prospect) =>
+        prospect.id === id
+          ? { ...prospect, stage }
+          : prospect
+      )
+    );
+  }
+
   return (
     <div className="p-8">
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">
-            Prospects
+            Pipeline
           </h1>
 
           <p className="text-gray-600 mt-2">
-            Manage your outbound pipeline.
+            Manage your outbound opportunities.
           </p>
         </div>
 
@@ -103,13 +135,15 @@ export default function ProspectsPage() {
         </button>
       </div>
 
+
       {showForm && (
-        <div className="mt-6 bg-white rounded-xl shadow p-6">
+        <div className="bg-white shadow rounded-xl p-6 mt-6">
+
           <h2 className="text-xl font-bold mb-4">
             New Prospect
           </h2>
 
-          {["name", "company", "title", "email"].map((field) => (
+          {Object.keys(form).map((field) => (
             <input
               key={field}
               className="border p-3 rounded w-full mb-3"
@@ -117,7 +151,9 @@ export default function ProspectsPage() {
                 field.charAt(0).toUpperCase() +
                 field.slice(1)
               }
-              value={form[field as keyof typeof form]}
+              value={
+                form[field as keyof typeof form]
+              }
               onChange={(e) =>
                 setForm({
                   ...form,
@@ -133,76 +169,83 @@ export default function ProspectsPage() {
           >
             Save Prospect
           </button>
+
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-6 mt-8">
-        <StatCard
-          title="Total Prospects"
-          value={String(prospects.length)}
-        />
 
-        <StatCard
-          title="Meetings Booked"
-          value="8"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
 
-        <StatCard
-          title="Follow-ups Due"
-          value="12"
-        />
-      </div>
-
-      <div className="mt-8 space-y-4">
-        {prospects.map((prospect) => (
+        {stages.map((stage) => (
           <div
-            key={prospect.id}
-            className="bg-white rounded-xl shadow p-6"
+            key={stage}
+            className="bg-gray-100 rounded-xl p-4"
           >
-            <h2 className="text-xl font-bold">
-              {prospect.name}
+
+            <h2 className="font-bold mb-4">
+              {stage}
             </h2>
 
-            <p className="text-gray-600">
-              {prospect.title} at {prospect.company}
-            </p>
+            <div className="space-y-4">
 
-            <p className="mt-2 text-gray-500">
-              {prospect.email}
-            </p>
+              {prospects
+                .filter(
+                  (prospect) =>
+                    prospect.stage === stage
+                )
+                .map((prospect) => (
 
-            <div className="mt-4">
-              <span className="bg-gray-100 px-3 py-1 rounded-full">
-                {prospect.status}
-              </span>
+                  <div
+                    key={prospect.id}
+                    className="bg-white rounded-xl shadow p-4"
+                  >
+
+                    <h3 className="font-bold">
+                      {prospect.name}
+                    </h3>
+
+                    <p className="text-gray-600">
+                      {prospect.company}
+                    </p>
+
+                    <p className="text-sm mt-2">
+                      {prospect.email}
+                    </p>
+
+
+                    <select
+                      className="border rounded p-2 mt-4 w-full"
+                      value={prospect.stage}
+                      onChange={(e) =>
+                        updateStage(
+                          prospect.id,
+                          e.target.value
+                        )
+                      }
+                    >
+
+                      {stages.map((option) => (
+                        <option
+                          key={option}
+                          value={option}
+                        >
+                          {option}
+                        </option>
+                      ))}
+
+                    </select>
+
+                  </div>
+
+                ))}
+
             </div>
 
-            <p className="mt-4">
-              Next Action: {prospect.action}
-            </p>
           </div>
         ))}
+
       </div>
-    </div>
-  );
-}
 
-function StatCard({
-  title,
-  value,
-}: {
-  title: string;
-  value: string;
-}) {
-  return (
-    <div className="bg-white rounded-xl shadow p-6">
-      <p className="text-gray-500">
-        {title}
-      </p>
-
-      <p className="text-3xl font-bold mt-2">
-        {value}
-      </p>
     </div>
   );
 }
